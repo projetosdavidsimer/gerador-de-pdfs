@@ -226,9 +226,11 @@ saida/
 
 # Arquivos sensíveis e pessoais
 imagens/
+pdfs_gerados/
 *.jpeg
 *.jpg
 *.png
 *.gif
 *.bmp
 *.tiff
+*.pdf
