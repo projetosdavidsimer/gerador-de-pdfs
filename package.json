@@ -1,0 +1,29 @@
+{
+  "name": "compactador-de-pdfs",
+  "version": "1.0.0",
+  "description": "Compactador de PDFs online - Reduza o tamanho dos seus arquivos PDF mantendo a qualidade",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 3000",
+    "build": "echo 'Build completed'",
+    "start": "python -m http.server 8080"
+  },
+  "keywords": [
+    "pdf",
+    "compressor",
+    "compress",
+    "pdf-tools",
+    "file-compression",
+    "web-app"
+  ],
+  "author": "David Simer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/projetosdavidsimer/compactador-de-pdfs.git"
+  },
+  "homepage": "https://github.com/projetosdavidsimer/compactador-de-pdfs#readme",
+  "bugs": {
+    "url": "https://github.com/projetosdavidsimer/compactador-de-pdfs/issues"
+  }
+}

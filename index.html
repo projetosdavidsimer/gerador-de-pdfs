@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compactador de PDFs - Reduza o tamanho dos seus arquivos</title>
+    <meta name="description" content="Compacte seus arquivos PDF online de forma gratuita. Escolha o tamanho desejado e mantenha a qualidade.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-file-pdf"></i>
+                <h1>Compactador de PDFs</h1>
+            </div>
+            <p class="subtitle">Reduza o tamanho dos seus arquivos PDF mantendo a qualidade</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h3>Arraste seus PDFs aqui</h3>
+                    <p>ou clique para selecionar arquivos</p>
+                    <input type="file" id="fileInput" multiple accept=".pdf" hidden>
+                    <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+                        <i class="fas fa-plus"></i> Selecionar Arquivos
+                    </button>
+                </div>
+            </section>
+
+            <!-- Size Selection -->
+            <section class="size-section" id="sizeSection" style="display: none;">
+                <h3><i class="fas fa-sliders-h"></i> Escolha o tamanho máximo</h3>
+                <div class="size-options">
+                    <div class="size-option" data-size="1">
+                        <div class="size-icon">📧</div>
+                        <div class="size-info">
+                            <h4>1 MB</h4>
+                            <p>Muito compacto<br><small>Ideal para email</small></p>
+                        </div>
+                    </div>
+                    <div class="size-option" data-size="2">
+                        <div class="size-icon">💼</div>
+                        <div class="size-info">
+                            <h4>2 MB</h4>
+                            <p>Compacto<br><small>Boa qualidade</small></p>
+                        </div>
+                    </div>
+                    <div class="size-option selected" data-size="5">
+                        <div class="size-icon">⭐</div>
+                        <div class="size-info">
+                            <h4>5 MB</h4>
+                            <p>Padrão<br><small>Qualidade alta</small></p>
+                        </div>
+                    </div>
+                    <div class="size-option" data-size="10">
+                        <div class="size-icon">🎯</div>
+                        <div class="size-info">
+                            <h4>10 MB</h4>
+                            <p>Grande<br><small>Qualidade máxima</small></p>
+                        </div>
+                    </div>
+                    <div class="size-option" data-size="custom">
+                        <div class="size-icon">⚙️</div>
+                        <div class="size-info">
+                            <h4>Personalizado</h4>
+                            <p>Seu tamanho<br><small>Digite o valor</small></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="custom-size" id="customSize" style="display: none;">
+                    <label for="customSizeInput">Tamanho personalizado (MB):</label>
+                    <input type="number" id="customSizeInput" min="0.1" max="100" step="0.1" placeholder="Ex: 3.5">
+                </div>
+
+                <button class="btn-process" id="processBtn" onclick="processFiles()">
+                    <i class="fas fa-compress-alt"></i> Compactar PDFs
+                </button>
+            </section>
+
+            <!-- Files List -->
+            <section class="files-section" id="filesSection" style="display: none;">
+                <h3><i class="fas fa-list"></i> Arquivos Selecionados</h3>
+                <div class="files-list" id="filesList"></div>
+            </section>
+
+            <!-- Processing -->
+            <section class="processing-section" id="processingSection" style="display: none;">
+                <div class="processing-animation">
+                    <div class="spinner"></div>
+                    <h3>Compactando seus PDFs...</h3>
+                    <p id="processingStatus">Preparando arquivos...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <h3><i class="fas fa-check-circle"></i> Compactação Concluída!</h3>
+                <div class="results-summary" id="resultsSummary"></div>
+                <div class="results-list" id="resultsList"></div>
+                <button class="btn-download-all" id="downloadAllBtn">
+                    <i class="fas fa-download"></i> Baixar Todos
+                </button>
+                <button class="btn-new" onclick="resetApp()">
+                    <i class="fas fa-plus"></i> Compactar Mais Arquivos
+                </button>
+            </section>
+        </main>
+
+        <!-- Features -->
+        <section class="features">
+            <h3>Por que escolher nosso compactador?</h3>
+            <div class="features-grid">
+                <div class="feature">
+                    <i class="fas fa-shield-alt"></i>
+                    <h4>100% Seguro</h4>
+                    <p>Seus arquivos são processados localmente no seu navegador</p>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-bolt"></i>
+                    <h4>Super Rápido</h4>
+                    <p>Compactação inteligente e otimizada para velocidade</p>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-sliders-h"></i>
+                    <h4>Personalizável</h4>
+                    <p>Escolha exatamente o tamanho que você precisa</p>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-images"></i>
+                    <h4>Preserva Qualidade</h4>
+                    <p>Mantém a qualidade das imagens e texto legível</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>© 2024 Compactador de PDFs - Desenvolvido por <a href="https://github.com/projetosdavidsimer" target="_blank">David Simer</a></p>
+            <div class="footer-links">
+                <a href="https://github.com/projetosdavidsimer/compactador-de-pdfs" target="_blank">
+                    <i class="fab fa-github"></i> GitHub
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
