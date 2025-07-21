@@ -25,7 +25,7 @@ Uma aplicação web moderna e profissional que converte múltiplas imagens em do
 
 ### 📸 Captura de Tela do Aplicativo
 
-![PDF Generator Pro - Interface Profissional](./Captura_de_tela_do_aplicativo.png)
+![PDF Generator Pro - Interface Profissional](Captura_de_tela_do_aplicativo.png)
 
 *Interface moderna e profissional do PDF Generator Pro - Transforme suas imagens em documentos PDF com qualidade superior*
 
