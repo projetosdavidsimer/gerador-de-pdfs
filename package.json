@@ -1,29 +1,31 @@
 {
-  "name": "compactador-de-pdfs",
-  "version": "1.0.0",
-  "description": "Compactador de PDFs online - Reduza o tamanho dos seus arquivos PDF mantendo a qualidade",
+  "name": "gerador-de-pdfs",
+  "version": "2.0.0",
+  "description": "PDF Generator Pro - Transforme suas imagens em documentos PDF profissionais",
   "main": "index.html",
   "scripts": {
     "dev": "python -m http.server 3000",
-    "build": "echo 'Build completed'",
+    "build": "echo 'Static site - no build required'",
     "start": "python -m http.server 8080"
   },
   "keywords": [
     "pdf",
-    "compressor",
-    "compress",
+    "generator",
+    "images-to-pdf",
     "pdf-tools",
-    "file-compression",
-    "web-app"
+    "image-converter",
+    "web-app",
+    "saas",
+    "professional"
   ],
   "author": "David Simer",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/projetosdavidsimer/compactador-de-pdfs.git"
+    "url": "https://github.com/projetosdavidsimer/gerador-de-pdfs.git"
   },
-  "homepage": "https://github.com/projetosdavidsimer/compactador-de-pdfs#readme",
+  "homepage": "https://github.com/projetosdavidsimer/gerador-de-pdfs#readme",
   "bugs": {
-    "url": "https://github.com/projetosdavidsimer/compactador-de-pdfs/issues"
+    "url": "https://github.com/projetosdavidsimer/gerador-de-pdfs/issues"
   }
 }
