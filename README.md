@@ -21,9 +21,13 @@ Uma aplicação web moderna e profissional que converte múltiplas imagens em do
 
 ## 🚀 Demo Online
 
-**[🔗 Acesse a aplicação](https://gerador-de-pdfs.vercel.app)**
+**[🔗 Acesse a aplicação online](https://gerador-de-pdfs.vercel.app/)**
 
-![PDF Generator Pro Interface](https://via.placeholder.com/800x500/2563eb/ffffff?text=PDF+Generator+Pro+-+Interface+Profissional)
+### 📸 Captura de Tela do Aplicativo
+
+![PDF Generator Pro - Interface Profissional](./Captura_de_tela_do_aplicativo.png)
+
+*Interface moderna e profissional do PDF Generator Pro - Transforme suas imagens em documentos PDF com qualidade superior*
 
 ## ✨ Funcionalidades Detalhadas
 
