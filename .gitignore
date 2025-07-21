@@ -223,3 +223,12 @@ test_*.pdf
 sample_*.pdf
 entrada/
 saida/
+
+# Arquivos sensíveis e pessoais
+imagens/
+*.jpeg
+*.jpg
+*.png
+*.gif
+*.bmp
+*.tiff
