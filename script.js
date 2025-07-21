@@ -1,7 +1,20 @@
 // Estado da aplicação
-let selectedFiles = [];
-let selectedSize = 5; // MB
-let processedFiles = [];
+let selectedImages = [];
+let generatedPdf = null;
+
+// Verificar se PDF-lib carregou
+window.addEventListener('load', function() {
+    console.log('=== VERIFICAÇÃO INICIAL ===');
+    console.log('PDFLib disponível:', typeof PDFLib !== 'undefined');
+    console.log('PDFLib.PDFDocument:', typeof PDFLib?.PDFDocument);
+    
+    if (typeof PDFLib === 'undefined') {
+        console.error('ERRO CRÍTICO: PDF-lib não foi carregada!');
+        showNotification('Erro: Biblioteca PDF não carregada. Recarregue a página.', 'error');
+    } else {
+        console.log('✅ PDF-lib carregada com sucesso');
+    }
+});
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
@@ -14,342 +27,680 @@ function initializeApp() {
 }
 
 function setupEventListeners() {
-    // File input
-    const fileInput = document.getElementById('fileInput');
-    fileInput.addEventListener('change', handleFileSelect);
-    
-    // Size options
-    const sizeOptions = document.querySelectorAll('.size-option');
-    sizeOptions.forEach(option => {
-        option.addEventListener('click', handleSizeSelect);
-    });
-    
-    // Custom size input
-    const customSizeInput = document.getElementById('customSizeInput');
-    customSizeInput.addEventListener('input', handleCustomSizeInput);
+    // File input para imagens
+    const imageInput = document.getElementById('imageInput');
+    imageInput.addEventListener('change', handleImageSelect);
+
+    // Download PDF button
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    if (downloadPdfBtn) {
+        downloadPdfBtn.addEventListener('click', downloadGeneratedPdf);
+    }
+
+    // Image order select
+    const imageOrderSelect = document.getElementById('imageOrder');
+    if (imageOrderSelect) {
+        imageOrderSelect.addEventListener('change', function() {
+            if (selectedImages.length > 0) {
+                sortImages();
+                displaySelectedImages();
+            }
+        });
+    }
 }
 
 function setupDragAndDrop() {
-    const uploadArea = document.getElementById('uploadArea');
-    
-    uploadArea.addEventListener('dragover', (e) => {
+    // Drag and drop para imagens
+    const imageUploadZone = document.getElementById('imageUploadZone');
+    setupDragDropZone(imageUploadZone, handleImages, 'image/*');
+}
+
+function setupDragDropZone(zone, handler, acceptType) {
+    zone.addEventListener('dragover', (e) => {
         e.preventDefault();
-        uploadArea.classList.add('dragover');
+        zone.classList.add('dragover');
     });
     
-    uploadArea.addEventListener('dragleave', (e) => {
+    zone.addEventListener('dragleave', (e) => {
         e.preventDefault();
-        uploadArea.classList.remove('dragover');
+        zone.classList.remove('dragover');
     });
     
-    uploadArea.addEventListener('drop', (e) => {
+    zone.addEventListener('drop', (e) => {
         e.preventDefault();
-        uploadArea.classList.remove('dragover');
+        zone.classList.remove('dragover');
         
-        const files = Array.from(e.dataTransfer.files).filter(file => 
-            file.type === 'application/pdf'
+        const files = Array.from(e.dataTransfer.files);
+        // Aceitar qualquer arquivo que pareça ser imagem
+        const validFiles = files.filter(file => 
+            file.type.startsWith('image/') || 
+            /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(file.name)
         );
         
-        if (files.length > 0) {
-            handleFiles(files);
+        if (validFiles.length > 0) {
+            handler(validFiles);
         } else {
-            showNotification('Por favor, selecione apenas arquivos PDF.', 'error');
+            showNotification('Por favor, selecione apenas arquivos de imagem.', 'error');
         }
     });
 }
 
-function handleFileSelect(e) {
+// Funções para geração de PDF a partir de imagens
+function handleImageSelect(e) {
     const files = Array.from(e.target.files);
-    handleFiles(files);
+    handleImages(files);
 }
 
-function handleFiles(files) {
-    selectedFiles = files;
-    displaySelectedFiles();
-    showSection('sizeSection');
-    showSection('filesSection');
-}
-
-function displaySelectedFiles() {
-    const filesList = document.getElementById('filesList');
-    filesList.innerHTML = '';
+function handleImages(files) {
+    console.log('=== ARQUIVOS SELECIONADOS ===');
+    console.log('Quantidade:', files.length);
     
-    selectedFiles.forEach((file, index) => {
-        const fileItem = createFileItem(file, index);
-        filesList.appendChild(fileItem);
+    files.forEach((file, index) => {
+        console.log(`Arquivo ${index + 1}:`, {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            lastModified: new Date(file.lastModified)
+        });
+    });
+    
+    selectedImages = [...selectedImages, ...files];
+    sortImages();
+    displaySelectedImages();
+    showSection('imageConfigSection');
+    showSection('imagesSection');
+    updateImageCounter();
+}
+
+function sortImages() {
+    const order = document.getElementById('imageOrder')?.value || 'original';
+    
+    switch(order) {
+        case 'name':
+            selectedImages.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+        case 'size':
+            selectedImages.sort((a, b) => b.size - a.size);
+            break;
+        case 'date':
+            selectedImages.sort((a, b) => b.lastModified - a.lastModified);
+            break;
+        default:
+            // Manter ordem original
+            break;
+    }
+}
+
+function displaySelectedImages() {
+    const imagesList = document.getElementById('imagesList');
+    imagesList.innerHTML = '';
+    
+    selectedImages.forEach((file, index) => {
+        const imageItem = createImageItem(file, index);
+        imagesList.appendChild(imageItem);
     });
 }
 
-function createFileItem(file, index) {
+function createImageItem(file, index) {
     const div = document.createElement('div');
-    div.className = 'file-item fade-in';
+    div.className = 'image-item fade-in';
     
     const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+    const url = URL.createObjectURL(file);
     
     div.innerHTML = `
-        <div class="file-info">
-            <div class="file-icon">
-                <i class="fas fa-file-pdf"></i>
-            </div>
-            <div class="file-details">
-                <h4>${file.name}</h4>
-                <p>Arquivo PDF</p>
-            </div>
+        <img src="${url}" alt="${file.name}" class="image-preview">
+        <div class="image-info">
+            <h5>${file.name}</h5>
+            <p>${sizeInMB} MB • ${file.type || 'Imagem'}</p>
         </div>
-        <div class="file-size">${sizeInMB} MB</div>
+        <div class="image-actions">
+            <span class="image-order">Página ${index + 1}</span>
+            <button class="btn btn-remove" onclick="removeImage(${index})">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
     `;
     
     return div;
 }
 
-function handleSizeSelect(e) {
-    // Remove seleção anterior
-    document.querySelectorAll('.size-option').forEach(option => {
-        option.classList.remove('selected');
-    });
+function removeImage(index) {
+    selectedImages.splice(index, 1);
+    displaySelectedImages();
+    updateImageCounter();
     
-    // Adiciona seleção atual
-    e.currentTarget.classList.add('selected');
+    if (selectedImages.length === 0) {
+        hideSection('imageConfigSection');
+        hideSection('imagesSection');
+    }
+}
+
+function clearImages() {
+    selectedImages = [];
+    document.getElementById('imageInput').value = '';
+    hideSection('imageConfigSection');
+    hideSection('imagesSection');
+    updateImageCounter();
+}
+
+function updateImageCounter() {
+    const counter = document.getElementById('imageCounter');
+    if (counter) {
+        const count = selectedImages.length;
+        counter.textContent = `${count} ${count === 1 ? 'imagem selecionada' : 'imagens selecionadas'}`;
+    }
+}
+
+// Função corrigida para obter dimensões da página
+function getPageDimensions(pageSize, orientation) {
+    console.log('🔧 getPageDimensions chamada com:', { pageSize, orientation });
     
-    const size = e.currentTarget.dataset.size;
+    // Definir dimensões fixas e válidas
+    const sizes = {
+        'A4': { width: 595, height: 842 },
+        'Letter': { width: 612, height: 792 },
+        'Legal': { width: 612, height: 1008 },
+        'A3': { width: 842, height: 1191 }
+    };
     
-    if (size === 'custom') {
-        document.getElementById('customSize').style.display = 'block';
-        selectedSize = parseFloat(document.getElementById('customSizeInput').value) || 5;
+    // Garantir que temos um pageSize válido
+    const validPageSize = pageSize && sizes[pageSize] ? pageSize : 'A4';
+    console.log('📏 Usando tamanho de página:', validPageSize);
+    
+    const size = sizes[validPageSize];
+    console.log('📐 Dimensões base:', size);
+    
+    // Aplicar orientação
+    let result;
+    if (orientation === 'landscape') {
+        result = { width: size.height, height: size.width };
+        console.log('🔄 Aplicando orientação paisagem');
     } else {
-        document.getElementById('customSize').style.display = 'none';
-        selectedSize = parseFloat(size);
+        result = { width: size.width, height: size.height };
+        console.log('📄 Usando orientação retrato');
     }
+    
+    console.log('✅ Dimensões finais:', result);
+    
+    // Verificação de segurança
+    if (!result.width || !result.height || isNaN(result.width) || isNaN(result.height)) {
+        console.error('❌ ERRO: Dimensões inválidas detectadas, usando A4 padrão');
+        return { width: 595, height: 842 };
+    }
+    
+    return result;
 }
 
-function handleCustomSizeInput(e) {
-    const value = parseFloat(e.target.value);
-    if (value > 0) {
-        selectedSize = value;
-    }
-}
-
-async function processFiles() {
-    if (selectedFiles.length === 0) {
-        showNotification('Selecione pelo menos um arquivo PDF.', 'error');
+async function generatePDF() {
+    console.log('\n=== INICIANDO GERAÇÃO DE PDF ===');
+    
+    // Verificar PDF-lib novamente
+    if (typeof PDFLib === 'undefined') {
+        console.error('ERRO: PDF-lib não está disponível');
+        showNotification('Erro: Biblioteca PDF não carregada. Recarregue a página.', 'error');
         return;
     }
     
-    if (!selectedSize || selectedSize <= 0) {
-        showNotification('Selecione um tamanho válido.', 'error');
+    if (selectedImages.length === 0) {
+        showNotification('Selecione pelo menos uma imagem.', 'error');
         return;
     }
     
-    showSection('processingSection');
-    hideSection('sizeSection');
-    hideSection('filesSection');
+    console.log(`Total de imagens selecionadas: ${selectedImages.length}`);
     
-    processedFiles = [];
-    const totalFiles = selectedFiles.length;
+    showSection('pdfProcessingSection');
+    hideSection('imageConfigSection');
+    hideSection('imagesSection');
     
-    for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
-        updateProcessingStatus(`Processando ${file.name}... (${i + 1}/${totalFiles})`);
-        updateProgress((i / totalFiles) * 100);
-        
-        try {
-            const compressedFile = await compressPDF(file, selectedSize);
-            processedFiles.push({
-                original: file,
-                compressed: compressedFile,
-                originalSize: file.size,
-                compressedSize: compressedFile.size,
-                savings: file.size - compressedFile.size
-            });
-        } catch (error) {
-            console.error('Erro ao processar arquivo:', error);
-            showNotification(`Erro ao processar ${file.name}`, 'error');
-        }
-    }
-    
-    updateProgress(100);
-    setTimeout(() => {
-        showResults();
-    }, 500);
-}
-
-async function compressPDF(file, maxSizeMB) {
     try {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+        const pageSize = document.getElementById('pageSize').value;
+        const orientation = document.getElementById('orientation').value;
+        const imageQuality = document.getElementById('imageQuality').value;
+        const margin = parseFloat(document.getElementById('margin').value) || 10;
+        const pdfName = document.getElementById('pdfName').value.trim() || 'documento_gerado';
         
-        // Configurações de compressão baseadas no tamanho desejado
-        let compressionLevel = 0.8;
-        if (maxSizeMB <= 1) compressionLevel = 0.3;
-        else if (maxSizeMB <= 2) compressionLevel = 0.5;
-        else if (maxSizeMB <= 5) compressionLevel = 0.7;
-        else if (maxSizeMB <= 10) compressionLevel = 0.8;
-        else compressionLevel = 0.9;
+        console.log('Configurações:', { pageSize, orientation, imageQuality, margin, pdfName });
         
-        // Comprime o PDF
-        const pdfBytes = await pdfDoc.save({
-            useObjectStreams: false,
-            addDefaultPage: false,
-            objectsPerTick: 50,
-        });
+        updatePdfProcessingStatus('Criando documento PDF...');
+        updatePdfProgress(5);
         
-        // Verifica se precisa de mais compressão
-        const currentSizeMB = pdfBytes.length / (1024 * 1024);
+        // Criar novo documento PDF
+        console.log('Criando documento PDF...');
+        const pdfDoc = await PDFLib.PDFDocument.create();
+        console.log('✅ Documento PDF criado com sucesso');
         
-        if (currentSizeMB > maxSizeMB) {
-            // Aplica compressão mais agressiva
-            const compressedPdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
-            const finalPdfBytes = await compressedPdfDoc.save({
-                useObjectStreams: true,
-                addDefaultPage: false,
-                objectsPerTick: 25,
-            });
-            
-            return new File([finalPdfBytes], file.name, { type: 'application/pdf' });
+        // Definir dimensões da página com verificação
+        const pageDimensions = getPageDimensions(pageSize, orientation);
+        console.log('📏 Dimensões da página validadas:', pageDimensions);
+        
+        // Verificação adicional de segurança
+        if (!pageDimensions || !pageDimensions.width || !pageDimensions.height) {
+            throw new Error('Erro ao obter dimensões da página');
         }
         
-        return new File([pdfBytes], file.name, { type: 'application/pdf' });
+        const totalImages = selectedImages.length;
+        let processedCount = 0;
+        let failedImages = [];
+        
+        for (let i = 0; i < selectedImages.length; i++) {
+            const imageFile = selectedImages[i];
+            console.log(`\n--- Processando imagem ${i + 1}/${totalImages}: ${imageFile.name} ---`);
+            
+            updatePdfProcessingStatus(`Processando imagem ${i + 1} de ${totalImages}: ${imageFile.name}`);
+            updatePdfProgress(5 + (i / totalImages) * 85);
+            
+            try {
+                // Verificar se o arquivo é válido
+                if (!imageFile || imageFile.size === 0) {
+                    console.error(`❌ Arquivo inválido: ${imageFile.name}`);
+                    failedImages.push(`${imageFile.name} (arquivo vazio)`);
+                    continue;
+                }
+                
+                console.log(`📁 Arquivo válido: ${imageFile.name}, tamanho: ${imageFile.size} bytes, tipo: ${imageFile.type}`);
+                
+                // Adicionar nova página com dimensões validadas
+                console.log('📄 Adicionando nova página com dimensões:', pageDimensions);
+                const page = pdfDoc.addPage([pageDimensions.width, pageDimensions.height]);
+                console.log('✅ Página adicionada com sucesso');
+                
+                // Processar imagem
+                console.log('🖼️ Iniciando processamento da imagem...');
+                const image = await processImageForPDF(pdfDoc, imageFile);
+                console.log(`✅ Imagem processada com sucesso, dimensões: ${image.width}x${image.height}`);
+                
+                // Calcular dimensões da imagem na página
+                const { width: pageWidth, height: pageHeight } = pageDimensions;
+                const marginPoints = margin * 2.83; // Converter mm para pontos
+                const availableWidth = pageWidth - (marginPoints * 2);
+                const availableHeight = pageHeight - (marginPoints * 2);
+                
+                const imageAspectRatio = image.width / image.height;
+                const availableAspectRatio = availableWidth / availableHeight;
+                
+                let imageWidth, imageHeight;
+                
+                if (imageAspectRatio > availableAspectRatio) {
+                    // Imagem é mais larga
+                    imageWidth = availableWidth;
+                    imageHeight = availableWidth / imageAspectRatio;
+                } else {
+                    // Imagem é mais alta
+                    imageHeight = availableHeight;
+                    imageWidth = availableHeight * imageAspectRatio;
+                }
+                
+                // Centralizar imagem na página
+                const x = (pageWidth - imageWidth) / 2;
+                const y = (pageHeight - imageHeight) / 2;
+                
+                console.log(`🎯 Desenhando imagem na posição: x=${x.toFixed(2)}, y=${y.toFixed(2)}, width=${imageWidth.toFixed(2)}, height=${imageHeight.toFixed(2)}`);
+                
+                // Desenhar imagem na página
+                page.drawImage(image, {
+                    x: x,
+                    y: y,
+                    width: imageWidth,
+                    height: imageHeight,
+                });
+                
+                console.log(`✅ Imagem ${imageFile.name} adicionada com sucesso ao PDF`);
+                processedCount++;
+                
+            } catch (imageError) {
+                console.error(`❌ ERRO ao processar imagem ${imageFile.name}:`, imageError);
+                failedImages.push(`${imageFile.name} (${imageError.message})`);
+                continue;
+            }
+        }
+        
+        console.log(`\n=== RESUMO: ${processedCount} de ${totalImages} imagens processadas ===`);
+        if (failedImages.length > 0) {
+            console.log('❌ Imagens que falharam:', failedImages);
+        }
+        
+        if (processedCount === 0) {
+            const errorMsg = failedImages.length > 0 
+                ? `Nenhuma imagem pôde ser processada:\n${failedImages.join('\n')}`
+                : 'Nenhuma imagem pôde ser processada. Verifique se os arquivos são imagens válidas.';
+            throw new Error(errorMsg);
+        }
+        
+        updatePdfProcessingStatus('Finalizando PDF...');
+        updatePdfProgress(95);
+        
+        console.log('💾 Salvando PDF...');
+        
+        // Salvar PDF com configurações simples
+        const pdfBytes = await pdfDoc.save();
+        console.log(`✅ PDF salvo com sucesso, tamanho: ${pdfBytes.length} bytes`);
+        
+        // Garantir que o nome do arquivo termine com .pdf
+        const fileName = pdfName.endsWith('.pdf') ? pdfName : `${pdfName}.pdf`;
+        generatedPdf = new File([pdfBytes], fileName, { type: 'application/pdf' });
+        
+        console.log(`📄 Arquivo PDF criado: ${fileName}`);
+        
+        updatePdfProgress(100);
+        
+        // Mostrar aviso se algumas imagens falharam
+        if (failedImages.length > 0) {
+            showNotification(`PDF gerado com ${processedCount} imagens. ${failedImages.length} imagens falharam.`, 'warning');
+        }
+        
+        setTimeout(() => {
+            showPdfResults();
+        }, 500);
         
     } catch (error) {
-        console.error('Erro na compressão:', error);
-        // Em caso de erro, retorna o arquivo original
-        return file;
+        console.error('❌ ERRO GERAL ao gerar PDF:', error);
+        showNotification(`Erro ao gerar PDF: ${error.message}`, 'error');
+        hideSection('pdfProcessingSection');
+        showSection('imageConfigSection');
+        showSection('imagesSection');
     }
 }
 
-function updateProcessingStatus(status) {
-    document.getElementById('processingStatus').textContent = status;
+// Função para processar imagens com múltiplas tentativas
+async function processImageForPDF(pdfDoc, imageFile) {
+    console.log(`🔄 Processando imagem: ${imageFile.name}`);
+    
+    // Estratégia 1: Tentar como JPG se o tipo ou extensão indicar
+    if (imageFile.type === 'image/jpeg' || 
+        imageFile.type === 'image/jpg' || 
+        imageFile.name.toLowerCase().match(/\.(jpg|jpeg)$/)) {
+        
+        try {
+            console.log('📸 Tentando processar como JPG...');
+            const arrayBuffer = await imageFile.arrayBuffer();
+            console.log(`📦 ArrayBuffer criado, tamanho: ${arrayBuffer.byteLength} bytes`);
+            
+            if (arrayBuffer.byteLength === 0) {
+                throw new Error('ArrayBuffer vazio');
+            }
+            
+            const image = await pdfDoc.embedJpg(arrayBuffer);
+            console.log('✅ JPG processado com sucesso');
+            return image;
+        } catch (error) {
+            console.warn(`⚠️ Erro ao processar como JPG: ${error.message}`);
+        }
+    }
+    
+    // Estratégia 2: Tentar como PNG
+    if (imageFile.type === 'image/png' || 
+        imageFile.name.toLowerCase().endsWith('.png')) {
+        
+        try {
+            console.log('🖼️ Tentando processar como PNG...');
+            const arrayBuffer = await imageFile.arrayBuffer();
+            console.log(`📦 ArrayBuffer criado, tamanho: ${arrayBuffer.byteLength} bytes`);
+            
+            if (arrayBuffer.byteLength === 0) {
+                throw new Error('ArrayBuffer vazio');
+            }
+            
+            const image = await pdfDoc.embedPng(arrayBuffer);
+            console.log('✅ PNG processado com sucesso');
+            return image;
+        } catch (error) {
+            console.warn(`⚠️ Erro ao processar como PNG: ${error.message}`);
+        }
+    }
+    
+    // Estratégia 3: Converter usando Canvas
+    console.log('🎨 Convertendo usando Canvas...');
+    try {
+        const pngArrayBuffer = await convertImageToCanvas(imageFile);
+        console.log(`🔄 Conversão concluída, tamanho: ${pngArrayBuffer.byteLength} bytes`);
+        
+        if (pngArrayBuffer.byteLength === 0) {
+            throw new Error('Conversão resultou em dados vazios');
+        }
+        
+        const image = await pdfDoc.embedPng(pngArrayBuffer);
+        console.log('✅ Imagem convertida processada com sucesso');
+        return image;
+    } catch (error) {
+        console.error(`❌ Erro na conversão: ${error.message}`);
+        throw new Error(`Não foi possível processar a imagem ${imageFile.name}: ${error.message}`);
+    }
 }
 
-function updateProgress(percentage) {
-    document.getElementById('progressFill').style.width = percentage + '%';
-}
-
-function showResults() {
-    hideSection('processingSection');
-    showSection('resultsSection');
-    
-    displayResultsSummary();
-    displayResultsList();
-}
-
-function displayResultsSummary() {
-    const summary = document.getElementById('resultsSummary');
-    
-    const totalOriginalSize = processedFiles.reduce((sum, file) => sum + file.originalSize, 0);
-    const totalCompressedSize = processedFiles.reduce((sum, file) => sum + file.compressedSize, 0);
-    const totalSavings = totalOriginalSize - totalCompressedSize;
-    const savingsPercentage = ((totalSavings / totalOriginalSize) * 100).toFixed(1);
-    
-    summary.innerHTML = `
-        <h4>📊 Resumo da Compactação</h4>
-        <p><strong>${processedFiles.length}</strong> arquivos processados com sucesso</p>
-        <p>Tamanho original: <strong>${formatFileSize(totalOriginalSize)}</strong></p>
-        <p>Tamanho compactado: <strong>${formatFileSize(totalCompressedSize)}</strong></p>
-        <p>Economia total: <strong>${formatFileSize(totalSavings)} (${savingsPercentage}%)</strong></p>
-    `;
-}
-
-function displayResultsList() {
-    const resultsList = document.getElementById('resultsList');
-    resultsList.innerHTML = '';
-    
-    processedFiles.forEach((fileData, index) => {
-        const resultItem = createResultItem(fileData, index);
-        resultsList.appendChild(resultItem);
+// Função de conversão usando Canvas
+function convertImageToCanvas(imageFile) {
+    return new Promise((resolve, reject) => {
+        console.log(`🎨 Iniciando conversão de ${imageFile.name} usando Canvas`);
+        
+        const img = new Image();
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Timeout de segurança
+        const timeout = setTimeout(() => {
+            reject(new Error(`Timeout ao carregar ${imageFile.name}`));
+        }, 15000);
+        
+        img.onload = function() {
+            clearTimeout(timeout);
+            console.log(`🖼️ Imagem carregada: ${img.width}x${img.height}`);
+            
+            try {
+                // Verificar se a imagem tem dimensões válidas
+                if (!img.width || !img.height || img.width <= 0 || img.height <= 0) {
+                    reject(new Error(`Dimensões inválidas: ${img.width}x${img.height}`));
+                    return;
+                }
+                
+                // Configurar canvas
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                // Fundo branco
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Desenhar imagem
+                ctx.drawImage(img, 0, 0);
+                console.log('✅ Imagem desenhada no canvas');
+                
+                // Converter para blob
+                canvas.toBlob(function(blob) {
+                    if (!blob || blob.size === 0) {
+                        reject(new Error('Falha ao criar blob ou blob vazio'));
+                        return;
+                    }
+                    
+                    console.log(`📦 Blob criado, tamanho: ${blob.size} bytes`);
+                    
+                    // Converter blob para ArrayBuffer
+                    const reader = new FileReader();
+                    reader.onload = function() {
+                        if (!reader.result || reader.result.byteLength === 0) {
+                            reject(new Error('ArrayBuffer vazio após conversão'));
+                            return;
+                        }
+                        
+                        console.log(`✅ ArrayBuffer criado, tamanho: ${reader.result.byteLength} bytes`);
+                        resolve(reader.result);
+                    };
+                    reader.onerror = function() {
+                        reject(new Error('Erro ao ler blob'));
+                    };
+                    reader.readAsArrayBuffer(blob);
+                }, 'image/png', 0.9);
+                
+            } catch (error) {
+                clearTimeout(timeout);
+                console.error('❌ Erro no canvas:', error);
+                reject(error);
+            }
+        };
+        
+        img.onerror = function(event) {
+            clearTimeout(timeout);
+            console.error(`❌ Erro ao carregar imagem: ${imageFile.name}`, event);
+            reject(new Error(`Erro ao carregar imagem: ${imageFile.name}`));
+        };
+        
+        // Carregar imagem
+        try {
+            const url = URL.createObjectURL(imageFile);
+            console.log(`🔗 URL criada para ${imageFile.name}`);
+            img.src = url;
+            
+            // Cleanup da URL
+            const cleanup = () => {
+                try {
+                    URL.revokeObjectURL(url);
+                    console.log(`🧹 URL limpa para ${imageFile.name}`);
+                } catch (e) {
+                    // Ignorar erro de cleanup
+                }
+            };
+            
+            img.addEventListener('load', cleanup, { once: true });
+            img.addEventListener('error', cleanup, { once: true });
+            
+        } catch (error) {
+            clearTimeout(timeout);
+            reject(new Error(`Erro ao criar URL da imagem: ${error.message}`));
+        }
     });
 }
 
-function createResultItem(fileData, index) {
-    const div = document.createElement('div');
-    div.className = 'result-item fade-in';
+function updatePdfProcessingStatus(status) {
+    const element = document.getElementById('pdfProcessingStatus');
+    if (element) {
+        element.textContent = status;
+    }
+}
+
+function updatePdfProgress(percentage) {
+    const fillElement = document.getElementById('pdfProgressFill');
+    const textElement = document.getElementById('pdfProgressText');
     
-    const savingsPercentage = ((fileData.savings / fileData.originalSize) * 100).toFixed(1);
-    const isWithinLimit = (fileData.compressedSize / (1024 * 1024)) <= selectedSize;
-    const statusIcon = isWithinLimit ? '✅' : '⚠️';
-    const statusText = isWithinLimit ? 'Dentro do limite' : 'Acima do limite';
+    if (fillElement) {
+        fillElement.style.width = percentage + '%';
+    }
+    if (textElement) {
+        textElement.textContent = Math.round(percentage) + '%';
+    }
+}
+
+function showPdfResults() {
+    hideSection('pdfProcessingSection');
+    showSection('pdfResultsSection');
     
-    div.innerHTML = `
-        <div class="result-info">
-            <h4>${statusIcon} ${fileData.original.name}</h4>
-            <p>${statusText} (máximo: ${selectedSize} MB)</p>
-            <div class="size-comparison">
-                <div class="size-before">
-                    <small>Antes</small>
-                    <span>${formatFileSize(fileData.originalSize)}</span>
-                </div>
-                <div class="size-after">
-                    <small>Depois</small>
-                    <span>${formatFileSize(fileData.compressedSize)}</span>
-                </div>
-                <div class="savings">
-                    <small>Economia</small>
-                    <span>${savingsPercentage}%</span>
-                </div>
+    displayPdfResultInfo();
+}
+
+function displayPdfResultInfo() {
+    const resultInfo = document.getElementById('pdfResultInfo');
+    if (!resultInfo || !generatedPdf) return;
+    
+    const sizeInMB = (generatedPdf.size / (1024 * 1024)).toFixed(2);
+    const pageSize = document.getElementById('pageSize').value;
+    const orientation = document.getElementById('orientation').value;
+    const quality = document.getElementById('imageQuality').value;
+    
+    const qualityText = {
+        'high': 'Alta',
+        'medium': 'Média',
+        'low': 'Baixa'
+    };
+    
+    resultInfo.innerHTML = `
+        <h4><i class="fas fa-file-pdf"></i> PDF Gerado com Sucesso!</h4>
+        <p>Seu documento foi criado com ${selectedImages.length} ${selectedImages.length === 1 ? 'página' : 'páginas'}</p>
+        <div class="pdf-info-grid">
+            <div class="stat-item">
+                <span class="stat-value">${selectedImages.length}</span>
+                <span class="stat-label">${selectedImages.length === 1 ? 'Página' : 'Páginas'}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${sizeInMB} MB</span>
+                <span class="stat-label">Tamanho</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${pageSize}</span>
+                <span class="stat-label">Formato</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${orientation === 'portrait' ? 'Retrato' : 'Paisagem'}</span>
+                <span class="stat-label">Orientação</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${qualityText[quality]}</span>
+                <span class="stat-label">Qualidade</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${document.getElementById('margin').value}mm</span>
+                <span class="stat-label">Margem</span>
             </div>
         </div>
-        <button class="btn-download" onclick="downloadFile(${index})">
-            <i class="fas fa-download"></i> Baixar
-        </button>
     `;
-    
-    return div;
 }
 
-function downloadFile(index) {
-    const fileData = processedFiles[index];
-    const url = URL.createObjectURL(fileData.compressed);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `compactado_${fileData.original.name}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-function downloadAllFiles() {
-    processedFiles.forEach((fileData, index) => {
-        setTimeout(() => downloadFile(index), index * 500);
-    });
-}
-
-// Event listener para o botão de download all
-document.addEventListener('DOMContentLoaded', function() {
-    const downloadAllBtn = document.getElementById('downloadAllBtn');
-    if (downloadAllBtn) {
-        downloadAllBtn.addEventListener('click', downloadAllFiles);
+function downloadGeneratedPdf() {
+    if (!generatedPdf) {
+        showNotification('Nenhum PDF foi gerado ainda.', 'error');
+        return;
     }
-});
+    
+    try {
+        const url = URL.createObjectURL(generatedPdf);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = generatedPdf.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showNotification('Download iniciado com sucesso!', 'success');
+    } catch (error) {
+        console.error('Erro no download:', error);
+        showNotification('Erro ao fazer download do PDF.', 'error');
+    }
+}
 
-function resetApp() {
-    selectedFiles = [];
-    processedFiles = [];
-    selectedSize = 5;
+function resetPdfGenerator() {
+    selectedImages = [];
+    generatedPdf = null;
     
-    // Reset file input
-    document.getElementById('fileInput').value = '';
+    // Reset image input
+    const imageInput = document.getElementById('imageInput');
+    if (imageInput) imageInput.value = '';
     
-    // Reset size selection
-    document.querySelectorAll('.size-option').forEach(option => {
-        option.classList.remove('selected');
+    // Reset form values
+    const elements = {
+        'pageSize': 'A4',
+        'orientation': 'portrait',
+        'imageQuality': 'medium',
+        'margin': '10',
+        'pdfName': 'documento_gerado',
+        'imageOrder': 'original'
+    };
+    
+    Object.keys(elements).forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.value = elements[id];
     });
-    document.querySelector('.size-option[data-size="5"]').classList.add('selected');
-    
-    // Hide custom size
-    document.getElementById('customSize').style.display = 'none';
-    document.getElementById('customSizeInput').value = '';
     
     // Show/hide sections
-    hideSection('sizeSection');
-    hideSection('filesSection');
-    hideSection('processingSection');
-    hideSection('resultsSection');
+    hideSection('imageConfigSection');
+    hideSection('imagesSection');
+    hideSection('pdfProcessingSection');
+    hideSection('pdfResultsSection');
     
     // Reset progress
-    updateProgress(0);
+    updatePdfProgress(0);
+    updateImageCounter();
 }
 
+// Funções utilitárias
 function showSection(sectionId) {
     const section = document.getElementById(sectionId);
     if (section) {
@@ -377,11 +728,20 @@ function formatFileSize(bytes) {
 }
 
 function showNotification(message, type = 'info') {
+    // Remover notificações existentes
+    const existingNotifications = document.querySelectorAll('.notification');
+    existingNotifications.forEach(notification => notification.remove());
+    
     // Criar elemento de notificação
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
+    
+    const iconClass = type === 'error' ? 'exclamation-circle' : 
+                     type === 'success' ? 'check-circle' : 
+                     type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+    
     notification.innerHTML = `
-        <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        <i class="fas fa-${iconClass}"></i>
         <span>${message}</span>
         <button onclick="this.parentElement.remove()">
             <i class="fas fa-times"></i>
@@ -395,42 +755,67 @@ function showNotification(message, type = 'info') {
         styles.textContent = `
             .notification {
                 position: fixed;
-                top: 20px;
-                right: 20px;
+                top: 80px;
+                right: 24px;
                 background: white;
-                padding: 15px 20px;
+                padding: 16px 20px;
                 border-radius: 8px;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
                 display: flex;
                 align-items: center;
-                gap: 10px;
+                gap: 12px;
                 z-index: 1000;
                 max-width: 400px;
                 animation: slideIn 0.3s ease-out;
+                border-left: 4px solid #2563eb;
             }
             
             .notification-error {
-                border-left: 4px solid #dc3545;
+                border-left-color: #dc2626;
+            }
+            
+            .notification-success {
+                border-left-color: #059669;
+            }
+            
+            .notification-warning {
+                border-left-color: #d97706;
             }
             
             .notification-info {
-                border-left: 4px solid #17a2b8;
+                border-left-color: #2563eb;
             }
             
             .notification i:first-child {
-                color: #dc3545;
+                color: #2563eb;
+                font-size: 18px;
             }
             
-            .notification-info i:first-child {
-                color: #17a2b8;
+            .notification-error i:first-child {
+                color: #dc2626;
+            }
+            
+            .notification-success i:first-child {
+                color: #059669;
+            }
+            
+            .notification-warning i:first-child {
+                color: #d97706;
             }
             
             .notification button {
                 background: none;
                 border: none;
                 cursor: pointer;
-                color: #666;
+                color: #94a3b8;
                 margin-left: auto;
+                padding: 4px;
+                border-radius: 4px;
+                transition: background-color 0.2s ease;
+            }
+            
+            .notification button:hover {
+                background-color: #f1f5f9;
             }
             
             @keyframes slideIn {

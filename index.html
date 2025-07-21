@@ -3,160 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compactador de PDFs - Reduza o tamanho dos seus arquivos</title>
-    <meta name="description" content="Compacte seus arquivos PDF online de forma gratuita. Escolha o tamanho desejado e mantenha a qualidade.">
+    <title>PDF Generator Pro - Gerador Profissional de PDFs</title>
+    <meta name="description" content="Plataforma profissional para geração de documentos PDF a partir de imagens. Seguro, rápido e eficiente.">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="logo">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
                 <i class="fas fa-file-pdf"></i>
-                <h1>Compactador de PDFs</h1>
+                <span>PDF Generator Pro</span>
             </div>
-            <p class="subtitle">Reduza o tamanho dos seus arquivos PDF mantendo a qualidade</p>
-        </header>
+            <div class="nav-menu">
+                <div class="nav-info">
+                    <i class="fas fa-images"></i>
+                    <span>Gerador de PDF</span>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Upload Section -->
-            <section class="upload-section">
-                <div class="upload-area" id="uploadArea">
+    <!-- Main Container -->
+    <div class="main-container">
+        <div class="content-header">
+            <h1>Gerador Profissional de PDFs</h1>
+            <p>Converta suas imagens em documentos PDF profissionais com qualidade superior</p>
+        </div>
+
+        <!-- Image Upload Section -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-images"></i> Upload de Imagens</h3>
+            </div>
+            <div class="card-body">
+                <div class="upload-zone" id="imageUploadZone">
                     <div class="upload-icon">
-                        <i class="fas fa-cloud-upload-alt"></i>
+                        <i class="fas fa-images"></i>
                     </div>
-                    <h3>Arraste seus PDFs aqui</h3>
-                    <p>ou clique para selecionar arquivos</p>
-                    <input type="file" id="fileInput" multiple accept=".pdf" hidden>
-                    <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
-                        <i class="fas fa-plus"></i> Selecionar Arquivos
+                    <h4>Arraste suas imagens aqui</h4>
+                    <p>Suporte para JPG, PNG, GIF, BMP, WEBP</p>
+                    <input type="file" id="imageInput" multiple accept="image/*" hidden>
+                    <button class="btn btn-primary" onclick="document.getElementById('imageInput').click()">
+                        <i class="fas fa-plus"></i> Selecionar Imagens
                     </button>
                 </div>
-            </section>
+            </div>
+        </div>
 
-            <!-- Size Selection -->
-            <section class="size-section" id="sizeSection" style="display: none;">
-                <h3><i class="fas fa-sliders-h"></i> Escolha o tamanho máximo</h3>
-                <div class="size-options">
-                    <div class="size-option" data-size="1">
-                        <div class="size-icon">📧</div>
-                        <div class="size-info">
-                            <h4>1 MB</h4>
-                            <p>Muito compacto<br><small>Ideal para email</small></p>
-                        </div>
+        <!-- Image Configuration -->
+        <div class="card" id="imageConfigSection" style="display: none;">
+            <div class="card-header">
+                <h3><i class="fas fa-cog"></i> Configurações do PDF</h3>
+            </div>
+            <div class="card-body">
+                <div class="pdf-config-grid">
+                    <div class="config-group">
+                        <label for="pageSize">Tamanho da Página:</label>
+                        <select id="pageSize">
+                            <option value="A4">A4 (210 x 297 mm)</option>
+                            <option value="Letter">Letter (216 x 279 mm)</option>
+                            <option value="Legal">Legal (216 x 356 mm)</option>
+                            <option value="A3">A3 (297 x 420 mm)</option>
+                        </select>
                     </div>
-                    <div class="size-option" data-size="2">
-                        <div class="size-icon">💼</div>
-                        <div class="size-info">
-                            <h4>2 MB</h4>
-                            <p>Compacto<br><small>Boa qualidade</small></p>
-                        </div>
+                    <div class="config-group">
+                        <label for="orientation">Orientação:</label>
+                        <select id="orientation">
+                            <option value="portrait">Retrato</option>
+                            <option value="landscape">Paisagem</option>
+                        </select>
                     </div>
-                    <div class="size-option selected" data-size="5">
-                        <div class="size-icon">⭐</div>
-                        <div class="size-info">
-                            <h4>5 MB</h4>
-                            <p>Padrão<br><small>Qualidade alta</small></p>
-                        </div>
+                    <div class="config-group">
+                        <label for="imageQuality">Qualidade da Imagem:</label>
+                        <select id="imageQuality">
+                            <option value="high">Alta (Melhor qualidade)</option>
+                            <option value="medium" selected>Média (Balanceado)</option>
+                            <option value="low">Baixa (Menor tamanho)</option>
+                        </select>
                     </div>
-                    <div class="size-option" data-size="10">
-                        <div class="size-icon">🎯</div>
-                        <div class="size-info">
-                            <h4>10 MB</h4>
-                            <p>Grande<br><small>Qualidade máxima</small></p>
-                        </div>
+                    <div class="config-group">
+                        <label for="margin">Margem (mm):</label>
+                        <input type="number" id="margin" value="10" min="0" max="50">
                     </div>
-                    <div class="size-option" data-size="custom">
-                        <div class="size-icon">⚙️</div>
-                        <div class="size-info">
-                            <h4>Personalizado</h4>
-                            <p>Seu tamanho<br><small>Digite o valor</small></p>
-                        </div>
+                    <div class="config-group">
+                        <label for="pdfName">Nome do PDF:</label>
+                        <input type="text" id="pdfName" placeholder="documento_gerado" value="documento_gerado">
                     </div>
-                </div>
-                
-                <div class="custom-size" id="customSize" style="display: none;">
-                    <label for="customSizeInput">Tamanho personalizado (MB):</label>
-                    <input type="number" id="customSizeInput" min="0.1" max="100" step="0.1" placeholder="Ex: 3.5">
-                </div>
-
-                <button class="btn-process" id="processBtn" onclick="processFiles()">
-                    <i class="fas fa-compress-alt"></i> Compactar PDFs
-                </button>
-            </section>
-
-            <!-- Files List -->
-            <section class="files-section" id="filesSection" style="display: none;">
-                <h3><i class="fas fa-list"></i> Arquivos Selecionados</h3>
-                <div class="files-list" id="filesList"></div>
-            </section>
-
-            <!-- Processing -->
-            <section class="processing-section" id="processingSection" style="display: none;">
-                <div class="processing-animation">
-                    <div class="spinner"></div>
-                    <h3>Compactando seus PDFs...</h3>
-                    <p id="processingStatus">Preparando arquivos...</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
+                    <div class="config-group">
+                        <label for="imageOrder">Ordem das Imagens:</label>
+                        <select id="imageOrder">
+                            <option value="original">Ordem Original</option>
+                            <option value="name">Por Nome</option>
+                            <option value="size">Por Tamanho</option>
+                            <option value="date">Por Data</option>
+                        </select>
                     </div>
                 </div>
-            </section>
 
-            <!-- Results -->
-            <section class="results-section" id="resultsSection" style="display: none;">
-                <h3><i class="fas fa-check-circle"></i> Compactação Concluída!</h3>
-                <div class="results-summary" id="resultsSummary"></div>
-                <div class="results-list" id="resultsList"></div>
-                <button class="btn-download-all" id="downloadAllBtn">
-                    <i class="fas fa-download"></i> Baixar Todos
+                <button class="btn btn-success btn-large" id="generatePdfBtn" onclick="generatePDF()">
+                    <i class="fas fa-file-pdf"></i> Gerar PDF
                 </button>
-                <button class="btn-new" onclick="resetApp()">
-                    <i class="fas fa-plus"></i> Compactar Mais Arquivos
-                </button>
-            </section>
-        </main>
+            </div>
+        </div>
 
-        <!-- Features -->
-        <section class="features">
-            <h3>Por que escolher nosso compactador?</h3>
+        <!-- Images Preview -->
+        <div class="card" id="imagesSection" style="display: none;">
+            <div class="card-header">
+                <h3><i class="fas fa-eye"></i> Pré-visualização das Imagens</h3>
+                <div class="card-actions">
+                    <span class="image-counter" id="imageCounter">0 imagens selecionadas</span>
+                    <button class="btn btn-small btn-secondary" onclick="clearImages()">
+                        <i class="fas fa-trash"></i> Limpar Todas
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="images-grid" id="imagesList"></div>
+            </div>
+        </div>
+
+        <!-- PDF Generation Processing -->
+        <div class="card" id="pdfProcessingSection" style="display: none;">
+            <div class="card-body">
+                <div class="processing-container">
+                    <div class="processing-spinner"></div>
+                    <h3>Gerando PDF...</h3>
+                    <p id="pdfProcessingStatus">Processando imagens...</p>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="pdfProgressFill"></div>
+                        </div>
+                        <span class="progress-text" id="pdfProgressText">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PDF Generation Results -->
+        <div class="card" id="pdfResultsSection" style="display: none;">
+            <div class="card-header">
+                <h3><i class="fas fa-check-circle"></i> PDF Gerado com Sucesso</h3>
+            </div>
+            <div class="card-body">
+                <div class="pdf-result-info" id="pdfResultInfo"></div>
+                <div class="results-actions">
+                    <button class="btn btn-success btn-large" id="downloadPdfBtn">
+                        <i class="fas fa-download"></i> Download PDF
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetPdfGenerator()">
+                        <i class="fas fa-refresh"></i> Gerar Novo PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="features-section">
+            <h3>Por que escolher nosso gerador?</h3>
             <div class="features-grid">
                 <div class="feature">
                     <i class="fas fa-shield-alt"></i>
                     <h4>100% Seguro</h4>
-                    <p>Seus arquivos são processados localmente no seu navegador</p>
+                    <p>Suas imagens são processadas localmente no seu navegador</p>
                 </div>
                 <div class="feature">
                     <i class="fas fa-bolt"></i>
                     <h4>Super Rápido</h4>
-                    <p>Compactação inteligente e otimizada para velocidade</p>
+                    <p>Geração otimizada e processamento em alta velocidade</p>
                 </div>
                 <div class="feature">
                     <i class="fas fa-sliders-h"></i>
                     <h4>Personalizável</h4>
-                    <p>Escolha exatamente o tamanho que você precisa</p>
+                    <p>Configure tamanho, orientação, qualidade e margens</p>
                 </div>
                 <div class="feature">
                     <i class="fas fa-images"></i>
-                    <h4>Preserva Qualidade</h4>
-                    <p>Mantém a qualidade das imagens e texto legível</p>
+                    <h4>Múltiplos Formatos</h4>
+                    <p>Suporte para JPG, PNG, GIF, BMP e WEBP</p>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-file-pdf"></i>
+                    <h4>Qualidade Profissional</h4>
+                    <p>PDFs com qualidade superior e otimização inteligente</p>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h4>Responsivo</h4>
+                    <p>Funciona perfeitamente em desktop, tablet e mobile</p>
                 </div>
             </div>
-        </section>
+        </div>
+    </div>
 
-        <!-- Footer -->
-        <footer class="footer">
-            <p>© 2024 Compactador de PDFs - Desenvolvido por <a href="https://github.com/projetosdavidsimer" target="_blank">David Simer</a></p>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>© 2024 PDF Generator Pro - Desenvolvido por <a href="https://github.com/projetosdavidsimer" target="_blank">David Simer</a></p>
             <div class="footer-links">
-                <a href="https://github.com/projetosdavidsimer/compactador-de-pdfs" target="_blank">
+                <a href="https://github.com/projetosdavidsimer/gerador-de-pdfs" target="_blank">
                     <i class="fab fa-github"></i> GitHub
                 </a>
             </div>
-        </footer>
-    </div>
+        </div>
+    </footer>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
