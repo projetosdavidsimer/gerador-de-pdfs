@@ -1,0 +1,25 @@
+não # Python files (não necessários para a versão web)
+*.py
+__pycache__/
+*.pyc
+requirements.txt
+
+# Diretórios de desenvolvimento
+entrada/
+saida/
+pdfs_gerados/
+imagens/
+
+# Arquivos de desenvolvimento
+.qodo/
+demo_*.py
+create_*.py
+
+# Git
+.git/
+.gitignore
+
+# Logs e cache
+*.log
+.cache/
+node_modules/

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://compactador-de-pdfs.vercel.app/sitemap.xml
